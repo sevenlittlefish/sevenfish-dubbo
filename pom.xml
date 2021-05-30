@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.sevenfish</groupId>
+    <artifactId>sevenfish-dubbo</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <modules>
+        <module>sevenfish-dubbo-base</module>
+        <module>sevenfish-dubbo-provider</module>
+        <module>sevenfish-dubbo-consumer</module>
+        <module>sevenfish-xxl-job-admin</module>
+    </modules>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.3.0.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <properties>
+        <spring-boot.version>2.3.0.RELEASE</spring-boot.version>
+        <dubbo.version>2.7.8</dubbo.version>
+        <mybatis.version>2.1.4</mybatis.version>
+        <mybatis-plus.version>3.4.2</mybatis-plus.version>
+        <dynamic-datasource.version>3.2.1</dynamic-datasource.version>
+        <zkclient.version>0.1</zkclient.version>
+        <xxl-job.version>2.2.0</xxl-job.version>
+        <seata.version>1.4.1</seata.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Apache Dubbo  -->
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-dependencies-bom</artifactId>
+                <version>${dubbo.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>

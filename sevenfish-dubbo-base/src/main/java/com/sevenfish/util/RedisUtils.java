@@ -4,12 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ScanOptions;
-import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.scripting.ScriptSource;
 import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -31,8 +31,13 @@ public class RedisUtils {
 
     public static final String DEL_KEY_SCRIPT = "if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end";
 
+    public static final ScriptSource SCRIPT_SOURCE = new ResourceScriptSource(new ClassPathResource("lua/slidingWindow.lua"));
+
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 指定缓存失效时间
@@ -603,6 +608,19 @@ public class RedisUtils {
     }
 
     /**
+     * ZCOUNT key min max
+     * 指定分数范围的元素个数
+     */
+    public Long zcount(Object key, double min, double max){
+        try {
+            return redisTemplate.opsForZSet().count(key, min, max);
+        } catch (Exception e) {
+            log.error("redis error: ", e);
+            return null;
+        }
+    }
+
+    /**
      * 	ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT]
      通过分数返回有序集合指定区间内的成员
      *
@@ -697,6 +715,19 @@ public class RedisUtils {
     }
 
     /**
+     * redis tryLock
+     * @param key
+     */
+    public boolean tryLock(String key){
+        if(key == null || key.isEmpty())
+            throw new RuntimeException("redis lock key is blank");
+        String value = UUID.randomUUID().toString().replace("-","");
+        threadLocal.set(value);
+        Boolean flag = redisTemplate.opsForValue().setIfAbsent(key, value, expireTime, TimeUnit.SECONDS);
+        return Objects.equals(flag,true);
+    }
+
+    /**
      * redis unlock
      * @param key
      */
@@ -708,12 +739,24 @@ public class RedisUtils {
             RedisScript<Long> redisScript = new DefaultRedisScript<>(DEL_KEY_SCRIPT,Long.class);
             String value = threadLocal.get();
             Long result = (Long)redisTemplate.execute(redisScript, Collections.singletonList(key), value);
-            if(result == 0)
+            if(Objects.equals(result,0L))
                 log.info("Release redis unlock fail,key:{},value:{},threadId:{}",key,value,Thread.currentThread().getId());
             else
                 log.info("Release redis unlock success,key:{},value:{},threadId:{}",key,value,Thread.currentThread().getId());
         } finally {
             threadLocal.remove();
         }
+    }
+
+    /**
+     * redis sliding window current limiting
+     */
+    public boolean slidingWindowCurrentLimiting(String key, int limitCount, String value, int windowRange, int expireTime){
+        DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+        redisScript.setScriptSource(SCRIPT_SOURCE);
+        redisScript.setResultType(Long.class);
+        Object result = redisTemplate.execute(redisScript, new StringRedisSerializer(), new JdkSerializationRedisSerializer(), Collections.singletonList(key), String.valueOf(limitCount),
+                String.valueOf(System.currentTimeMillis()), value, String.valueOf(windowRange), String.valueOf(expireTime));
+        return Objects.equals(result,1L);
     }
 }

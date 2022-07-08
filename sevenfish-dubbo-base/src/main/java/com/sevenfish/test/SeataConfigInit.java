@@ -8,9 +8,8 @@ import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 public class SeataConfigInit {
@@ -25,12 +24,12 @@ public class SeataConfigInit {
         zkClient.setZkSerializer(new ZkSerializer() {
             @Override
             public byte[] serialize(Object data) throws ZkMarshallingError {
-                return ((String)data).getBytes(Charset.forName("UTF-8"));
+                return ((String)data).getBytes(StandardCharsets.UTF_8);
             }
 
             @Override
             public Object deserialize(byte[] bytes) throws ZkMarshallingError {
-                return new String(bytes, Charset.forName("UTF-8"));
+                return new String(bytes, StandardCharsets.UTF_8);
             }
         });
         Properties properties = new Properties();
@@ -41,8 +40,6 @@ public class SeataConfigInit {
             for (Object key : properties.keySet()) {
                 putConfig(key.toString(),properties.get(key).toString());
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }

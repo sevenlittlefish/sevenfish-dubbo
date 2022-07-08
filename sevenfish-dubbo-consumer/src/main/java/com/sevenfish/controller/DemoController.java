@@ -1,5 +1,6 @@
 package com.sevenfish.controller;
 
+import com.sevenfish.annotation.CurrentLimiting;
 import com.sevenfish.common.Result;
 import com.sevenfish.service.CallbackService;
 import com.sevenfish.service.CallbackListener;
@@ -35,7 +36,8 @@ public class DemoController {
     private KafkaTemplate kafkaTemplate;
 
     @GetMapping("/hello")
-    public Object hello(@RequestParam("name")String name){
+    @CurrentLimiting(limitKey = "hello", limitNum = 2, windowRange = 1, expireTime = 60)
+    public Object hello(@RequestParam("name") String name) {
         return demoService.sayHello(name);
     }
 

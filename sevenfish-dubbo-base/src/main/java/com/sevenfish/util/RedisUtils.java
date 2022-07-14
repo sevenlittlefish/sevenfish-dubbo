@@ -36,9 +36,6 @@ public class RedisUtils {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
-
     /**
      * 指定缓存失效时间
      *
